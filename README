@@ -1,0 +1,25 @@
+Project: Daemonator
+
+This is a simple utility for using the daemons gem with RubyOnRails(version > 3).
+
+Its roughly 50 lines of code, and just provides the necessary wrapping and the leaves the meat of your daemon to you!
+
+Requirements: 
+  daemons gem(http://daemons.rubyforge.org/)
+  
+Usage:
+  in your daemon file(i put all my domain specific daemons in app/daemons, not in lib!):
+  
+    #!/usr/bin/env ruby
+    require File.expand_path(File.join(File.dirname(__FILE__), '..', '..', 'lib', 'daemonator'))
+
+    Daemonator.new("notifier").daemonize! do
+      Rails.logger.debug "notifier, woo!"
+      #do your thing!
+    end 
+    
+  You can of course fully customize your daemon, as much as the daemons gem supports like so:
+    Daemonator.new("notifier", {:log_dir => "log", :monitor => true})
+    
+  voila!
+  
