@@ -8,7 +8,7 @@ class Daemonator
     @interval = interval
     @opts = {
       :multiple => false,
-      :ontop => false,
+      :ontop => true,
       :backtrace => true,
       :monitor => false,
       :dir_mode => :normal,
@@ -17,38 +17,67 @@ class Daemonator
       :log_output => true
       }
       @opts.merge!(user_opts)
+      
+      self.init_logger!
   end
   
-  def daemonize!
-    Daemons.run_proc(@name, @opts) do
-      daemon_logger = ActiveSupport::BufferedLogger.new(File.join(Rails.root, "log", "#{@name.underscore}.log"))
-      Rails.logger = daemon_logger
-      ActiveRecord::Base.logger = daemon_logger
+  def daemonize!(&block)
+    unless block_given?
+      error_msg = "Must give block to daemonize! exiting..."
+      puts error_msg
+      Rails.logger.error error_msg
+      $running = false
+    end
+      
+    self.do_daemonize(&block)
+    
+  end
 
+  def logger
+    return @logger
+  end
+  protected
+
+  def do_daemonize(&block)
+    Daemons.run_proc(@name, @opts) do
+      require File.expand_path(File.join(File.dirname(__FILE__), '..', 'config', 'environment'))
+      self.init_logger!
+      
       $running = true
       Signal.trap("TERM") do 
         $running = false
       end
 
-      unless block_given?
-        error_msg = "Must give block to daemonize! exiting..."
-        Rails.logger.error error_msg
-        puts error_msg
-        $running = false
-      end
-
-
       while($running) do
   
-        # Replace this with your code
         Rails.logger.auto_flushing = true
         Rails.logger.info "#{@name} is still running at #{Time.now}.\n"
-  
-        yield
-        
+
+        do_yield(&block)
+
         sleep 3
       end
 
     end
+  end
+  
+  def do_yield(&block)
+    begin
+      block.call
+    rescue IOError => e
+      init_logger!
+      retry
+    rescue Exception => e
+      raise e
+    end
+  end
+  
+  def init_logger!
+    @logger = ActiveSupport::BufferedLogger.new(File.join(Rails.root, "log", "#{@name.underscore}.log"))
+    Rails.logger.close rescue nil
+    ActiveRecord::Base.logger.close rescue nil
+    Rails.logger = @logger
+    ActiveRecord::Base.logger = @logger
+    
   end
 end
