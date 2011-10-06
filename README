@@ -6,20 +6,29 @@ Its roughly 50 lines of code, and just provides the necessary wrapping and the l
 
 Requirements: 
   daemons gem(http://daemons.rubyforge.org/)
-  
+  application.rb must have the following line to prevent daemons from being required in production mode:
+
+      config.eager_load_paths -= %W(#{Brandid::Application.config.root}/app/daemons)
+
 Usage:
   in your daemon file(i put all my domain specific daemons in app/daemons, not in lib!):
   
     #!/usr/bin/env ruby
     require File.expand_path(File.join(File.dirname(__FILE__), '..', '..', 'lib', 'daemonator'))
 
-    Daemonator.new("notifier").daemonize! do
-      Rails.logger.debug "notifier, woo!"
+    Daemonator.new(<app name>, <interval>, <options>).daemonize! do
+      Rails.logger.debug "daemons running, woo!"
       #do your thing!
     end 
     
+Arguments:
+
+  app name - this identifies your daemon, as well, this will be the name of the pid and the log files
+  interval - this is the sleep interval of your daemon
+  opts     - the options hash and is passed directly to the daemons gem
+  
   You can of course fully customize your daemon, as much as the daemons gem supports like so:
     Daemonator.new("notifier", {:log_dir => "log", :monitor => true})
-    
+  
   voila!
   

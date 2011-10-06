@@ -3,11 +3,12 @@ require File.expand_path(File.join(File.dirname(__FILE__), '..', 'config', 'envi
 require 'daemons'
 
 class Daemonator
-  def initialize(name, user_opts={})
+  def initialize(name, interval, user_opts={})
     @name = name
+    @interval = interval
     @opts = {
       :multiple => false,
-      :ontop => true,
+      :ontop => false,
       :backtrace => true,
       :monitor => false,
       :dir_mode => :normal,
