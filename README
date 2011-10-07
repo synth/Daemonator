@@ -2,15 +2,19 @@ Project: Daemonator
 
 This is a simple utility for using the daemons gem with RubyOnRails(version > 3).
 
-Its roughly 50 lines of code, and just provides the necessary wrapping and the leaves the meat of your daemon to you!
+Its roughly 90 lines of code, and just provides the necessary wrapping and the leaves the meat of your daemon to you!  By 'necessary wrapping' I'm referring to loading of the rails env inside the forked process, handling connections to the AR database and to the log file which are lost even after you
+
 
 Requirements: 
+
   daemons gem(http://daemons.rubyforge.org/)
   application.rb must have the following line to prevent daemons from being required in production mode:
 
       config.eager_load_paths -= %W(#{Brandid::Application.config.root}/app/daemons)
 
+
 Usage:
+
   in your daemon file(i put all my domain specific daemons in app/daemons, not in lib!):
   
     #!/usr/bin/env ruby
@@ -20,6 +24,7 @@ Usage:
       Rails.logger.debug "daemons running, woo!"
       #do your thing!
     end 
+    
     
 Arguments:
 
