@@ -2,7 +2,7 @@ Project: Daemonator
 
 This is a simple utility for using the daemons gem with RubyOnRails(version > 3).
 
-Its roughly 90 lines of code, and just provides the necessary wrapping and the leaves the meat of your daemon to you!  By 'necessary wrapping' I'm referring to loading of the rails env inside the forked process, handling connections to the AR database and to the log file which are lost even after you
+Its roughly 90 lines of code, and just provides the necessary wrapping and the leaves the meat of your daemon to you!  By 'necessary wrapping' I'm referring to loading of the rails env inside the forked process, handling connections to the AR database and to the log file which are lost even after you reinclude the Rails env inside the forked process
 
 
 Requirements: 

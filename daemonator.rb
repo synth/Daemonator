@@ -43,7 +43,6 @@ class Daemonator
       error_msg = "Must give block to daemonize! exiting..."
       puts error_msg
       Rails.logger.error error_msg
-      $running = false
     end
       
     self.do_daemonize(&block)
@@ -96,12 +95,13 @@ class Daemonator
   #
   # yuck...
   def init_rails!
-    log_level = ("ActiveSupport::BufferedLogger::Severity::"+Brandid::Application.config.log_level.to_s.upcase).constantize
+    log_level = ("ActiveSupport::BufferedLogger::Severity::"+Rails::Application.config.log_level.to_s.upcase).constantize
     @logger = ActiveSupport::BufferedLogger.new(File.join(Rails.root, "log", "#{@name.underscore}.log"), log_level)
 
     #NOTE/TODO: I noticed in the Rails docs, they will eventually make ActionView use a seperate logger
     #           than ActionController, so this will eventually need to be added in here
     [Rails, ActiveRecord::Base, ActionController::Base, ActionMailer::Base].each do |logged_module|
+      #just in case there is a logger there, close it
       logged_module.logger.close rescue nil
       logged_module.logger = @logger
     end
