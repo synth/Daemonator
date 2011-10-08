@@ -1,4 +1,20 @@
 #!/usr/bin/env ruby
+#
+# Copyright 2011 - Peter Philips
+#
+# This program is free software: you can redistribute it and/or modify
+#     it under the terms of the GNU General Public License as published by
+#     the Free Software Foundation, either version 3 of the License, or
+#     (at your option) any later version.
+# 
+#     This program is distributed in the hope that it will be useful,
+#     but WITHOUT ANY WARRANTY; without even the implied warranty of
+#     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#     GNU General Public License for more details.
+# 
+#     You should have received a copy of the GNU General Public License
+#     along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 require File.expand_path(File.join(File.dirname(__FILE__), '..', 'config', 'environment'))
 require 'daemons'
 
@@ -72,13 +88,25 @@ class Daemonator
     end
   end
   
+  #When the process is forked or whatever is done, screwy things happen
+  #1. the file handles to all the loggers are lost
+  #2. the active record database connection is lost
+  #
+  # - So we need to reinitialize them...
+  #
+  # yuck...
   def init_rails!
     log_level = ("ActiveSupport::BufferedLogger::Severity::"+Brandid::Application.config.log_level.to_s.upcase).constantize
     @logger = ActiveSupport::BufferedLogger.new(File.join(Rails.root, "log", "#{@name.underscore}.log"), log_level)
-    Rails.logger.close rescue nil
-    ActiveRecord::Base.logger.close rescue nil
-    Rails.logger = @logger
-    ActiveRecord::Base.logger = @logger
+
+    #NOTE/TODO: I noticed in the Rails docs, they will eventually make ActionView use a seperate logger
+    #           than ActionController, so this will eventually need to be added in here
+    [Rails, ActiveRecord::Base, ActionController::Base, ActionMailer::Base].each do |logged_module|
+      logged_module.logger.close rescue nil
+      logged_module.logger = @logger
+    end
+
+    #reestablish db connection
     ActiveRecord::Base.establish_connection
   end
   
